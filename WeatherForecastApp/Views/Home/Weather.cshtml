@@ -1,0 +1,148 @@
+﻿
+@{
+    ViewBag.Title = "Weather";
+    // Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+@Scripts.Render("~/bundles/jquery")
+@Scripts.Render("~/bundles/bootstrap")
+@Scripts.Render("~/scripts/jquery.unobtrusive-ajax.js")
+
+<h2>Weather</h2>
+
+
+<input id="city" style="width: 200px" class="form-control" placeholder="Input your city" >
+
+
+<div class="navbar-btn">
+    <button type="button" class="btn btn-success" onclick="GetWeatherForecast()">Get Weather Forecast </button>
+</div>
+
+
+<div id="ShowWeather" class="media"></div>
+<div id="ShowForecast" class="media"></div>
+
+
+<script type="text/javascript">
+
+        function GetWeatherForecast() {
+
+            var city = $('#city').val();
+
+            var url = '@Html.Action("ReturnNewPathWeather")';//получаем Url для работы с текущей погоды
+
+            $.ajax({
+                url: url,
+                dataType: 'jsonp',//снимаем ограничения браузера при отправке ответов JSON из разных доменов с клиента
+                type: 'GET',
+                headers: {
+                    'Access-Control-Allow-Origin': '*'// разрешаем браузеру запрашивать код из любого источника 
+                },
+                cors: true,
+                secure: true,
+                data: { q: city },
+                contentType: "application/json; charset=utf-8",
+
+                beforeSend: function () { // пока запрос отправляется, выводим сообщение
+                    $('#ShowWeather').html('<p>Идет загрузка...</p>');
+                },
+
+                success: function (data) { //функция для вывода ответа запроса
+
+
+                    var response = '';
+                    $.each(data.weather, function (index, val) {
+
+                        response += '<p><h2>' + data.name + "</h2>";
+                        response += '<p></p>';
+                        response += "<img src=" + "https://openweathermap.org/img/wn/" + val.icon + ".png></p>";
+                        response += data.main.temp_min + '&deg;C ';
+                        response += ' | ';
+                        response += data.main.temp_max + '&deg;C ';
+                        response += val.main;
+                        response += ", ";
+                        response += val.description
+
+                    });
+                    $('#ShowWeather').html('<p><h2>' + 'Current  weather' + "</h2></p>" //вывод ответа в html-формате
+                                            + response + '<p></p>');
+                },
+
+                error: function () { //в случае ошибки запроса, выводим сообщение
+                    $('#ShowWeather').html('<p><b>' + 'Not Found'+ "</b></p>");
+
+                }
+
+
+
+            });
+            var anotherurl = '@Html.Action("ReturnNewPathForecast")';//получаем Url для работы с прогнозом погоды для города
+
+                    $.ajax({
+                        url: anotherurl,
+                        dataType: 'jsonp',
+                        type: 'GET',
+                        headers: {
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        cors: true,
+                        secure: true,
+                        data: { q: city },
+                        contentType: "application/json; charset=utf-8",
+
+                        beforeSend: function () {
+                           $('#ShowForecast').html('<p>Идет загрузка...</p>');
+                        },
+                        success: function (data) { //функция для отображения ответа на запрос в виде таблицы 
+
+                            var response = '';
+
+
+                            response += "<h2>" + data.city.name + "</h2>"; 
+
+                            response += "<table class='table table-bordered'>"
+                            response += "<tbody>"
+                            response += "<tr>"
+                            $.each(data.list, function (index, val) {
+
+                                response += "<td>";
+                                response += '<p>';
+                                response += '<p></p>';
+                                response += val.dt_txt.substring(5, val.dt_txt.length);
+                                response += "<img src=" + "https://openweathermap.org/img/wn/";
+                                response += val.weather[0].icon + ".png></p>";
+                                response += val.main.temp_min + '&deg;C ';
+                                response += ' | ';
+                                response += val.main.temp_max + '&deg;C ';
+                                response += '<br></br>';
+                                response += val.weather[0].main;
+                                response += '<br></br>';
+                                response += val.weather[0].description;
+                                response += '<p></p>';
+                                response += "</td>"
+
+                                if (index % 8 == 0) { //отображаем 8 ячеек на строку
+                                    response += "</tr>"
+                                    response += "<tr>"
+                                }
+
+                            });
+
+                            response += " </tbody > </table >"
+
+                            $('#ShowForecast').html('<p><h2>' + 'Weather forecast' + "</h2></p>" //вывод ответа на запрос
+                                                    + response);
+                        },
+
+                         error: function () {
+
+                             $('#ShowForecast').html('');
+
+                        }
+
+                    });
+        }
+
+</script>
+
+
